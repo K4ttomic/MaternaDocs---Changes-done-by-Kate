@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     flash("Account created for $username. Give them this temporary password (shown once):", $pw);
   }
   if ($id === $u['id']) flash('Use Settings to change your own password, and you cannot deactivate yourself.', null, 'danger');
+  if (in_array($act, ['reset', 'toggle', 'unlock'], true) && $id <= 0) flash('Invalid user selected.', null, 'danger');
   if ($act === 'reset') {
     $pw = temp_password();
     db()->prepare('UPDATE users SET password_hash=?, failed_attempts=0, locked_until=NULL WHERE id=?')->execute([password_hash($pw, PASSWORD_DEFAULT), $id]);
@@ -32,11 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   }
   if ($act === 'toggle') {
     db()->prepare('UPDATE users SET is_active = 1 - is_active WHERE id = ?')->execute([$id]);
-    log_action($u['id'], 'user_toggled', "user #$id"); flash('Account status updated.');
+    log_action($u['id'], 'user_status_changed', "user #$id"); flash('Account status updated.');
   }
   if ($act === 'unlock') {
     db()->prepare('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?')->execute([$id]);
-    log_action($u['id'], 'user_unlocked', "user #$id"); flash('Account unlocked.');
+    log_action($u['id'], 'account_unlocked', "user #$id"); flash('Account unlocked.');
   }
 }
 
@@ -52,10 +53,10 @@ shell_start($u, 'User Accounts'); ?>
 <div class="card-soft mb-4" style="height:auto"><h5>Add account</h5>
 <form method="post" class="row g-2 align-items-end">
   <input type="hidden" name="csrf" value="<?= csrf_token() ?>"><input type="hidden" name="action" value="create">
-  <div class="col-md-3"><label class="form-label small" for="fn">First name</label><input id="fn" name="first_name" class="form-control" required></div>
-  <div class="col-md-3"><label class="form-label small" for="mn">Middle name <span class="text-secondary">(optional)</span></label><input id="mn" name="middle_name" class="form-control"></div>
-  <div class="col-md-3"><label class="form-label small" for="ln">Surname</label><input id="ln" name="last_name" class="form-control" required></div>
-  <div class="col-md-4"><label class="form-label small" for="em">Username</label><input id="em" name="username" type="text" class="form-control" required autocapitalize="none" pattern="[A-Za-z0-9._]{3,30}" title="3-30 characters: letters, numbers, dot or underscore"></div>
+  <div class="col-md-3"><label class="form-label small" for="fn">First name</label><input id="fn" name="first_name" class="form-control" required maxlength="80"></div>
+  <div class="col-md-3"><label class="form-label small" for="mn">Middle name <span class="text-secondary">(optional)</span></label><input id="mn" name="middle_name" class="form-control" maxlength="80"></div>
+  <div class="col-md-3"><label class="form-label small" for="ln">Surname</label><input id="ln" name="last_name" class="form-control" required maxlength="80"></div>
+  <div class="col-md-4"><label class="form-label small" for="em">Username</label><input id="em" name="username" type="text" class="form-control" required maxlength="30" autocapitalize="none" pattern="[A-Za-z0-9._]{3,30}" title="3-30 characters: letters, numbers, dot or underscore"></div>
   <div class="col-md-3"><label class="form-label small" for="rl">Role</label><select id="rl" name="role" class="form-select">
     <?php foreach (ROLE_LABELS as $k => $l): ?><option value="<?= $k ?>"><?= e($l) ?></option><?php endforeach; ?></select></div>
   <div class="col-md-2"><button class="btn btn-primary w-100">Create</button></div>

@@ -35,10 +35,12 @@ MaternaDocs/
 ├── dashboard.php        Role-based dashboard (placeholder data for now)
 ├── settings.php         Account settings for every role: change own username and password
 ├── patients.php         Admin + front desk: patient list and search (name or PhilHealth no.), links to add/edit
-
-├── patient\_form.php     Admin + front desk: add/edit a patient with server-side validation and duplicate detection
-
+├── patient_form.php     Admin + front desk: add/edit a patient with server-side validation and duplicate detection
+├── documents.php        Unified Documents page: patients view/download only their own PDF; staff search & download for all
+├── health_record_form.php Admin + front desk: form to enter/update Health Record details with validation
+├── health_record_pdf.php  PDF generation: auto-fills Health_Record.pdf template with exact underline alignment
 ├── users.php            Admin only: create accounts (name, username, role), reset password, activate/deactivate, unlock
+├── audit_log.php        Admin only: system activity & security audit log viewer with search and filtering
 ├── setup.php            ONE-TIME DB creation + seed. Must be deleted after use.
 ├── database/schema.sql  Full schema (users, patients, audit\_log)
 
@@ -75,7 +77,7 @@ DB credentials are XAMPP defaults in `includes/db.php` (`root`, empty password).
 ## Database
 
 * **users**: `username` (unique, lowercase letters/digits/dot/underscore, 3-30 chars; changeable by the user in Settings), `password\_hash`, `first\_name`, `middle\_name`, `last\_name`, `role`, `is\_active`, `failed\_attempts`, `locked\_until`, `last\_login\_at`
-* **patients**: `user\_id` (nullable unique FK to users), `first\_name`, `middle\_name`, `last\_name`, `birthdate`, `civil\_status`, `philhealth\_no` (unique, stored as XX-XXXXXXXXX-X), `address`, `contact\_no`, `emergency\_contact\_name`, `emergency\_contact\_no`, `lmp`, `edd`, `gravida`, `para`, `created\_by`, timestamps
+* **patients**: `user_id` (nullable unique FK to users), `first_name`, `middle_name`, `last_name`, `birthdate`, `civil_status`, `philhealth_no` (unique, stored as XX-XXXXXXXXX-X), `address`, `contact_no`, `lmp`, `edd`, `gravida`, `created_by`, timestamps
 * **audit\_log**: `user\_id`, `action`, `detail`, `ip`, `created\_at`
 
 Only the **stable core fields** exist so far (see Decisions). Add form-specific columns through a migration (`ALTER TABLE`), not by recreating tables.
@@ -107,23 +109,23 @@ Green palette (ColorBrewer Greens), defined as CSS variables at the top of `asse
 * Patient table holds only stable core fields until templates arrive. Exception: `philhealth\_no`, added because the proposal requires PhilHealth ID validation. The clinic has since provided the PhilHealth CSF (Claim Signature Form); form-specific fields and document generation are still deliberately not started and should be a separate, scoped step.
 * **IoT feature (chosen):** monitor room temperature and humidity in patient rooms (important for newborns). Planned as a monitoring page with per-room readings and out-of-range alerts, fed by simulated data first; a sensor (for example ESP32 + DHT22) would later POST readings to a PHP endpoint. Not started.
 * No framework; keep the code simple enough for a student team to explain.
-* &#x20;Patient form validation limits (age 10-60, EDD within 300 days of LMP, gravida/para max 20) are constants at the top of `patient\_form.php`; confirm them with the clinic.
+* Patient form validation limits (age 10-60, EDD within 300 days of LMP, gravida max 20) are constants at the top of `patient_form.php`; confirm them with the clinic.
 
 ## Current status
 
-* Done: Settings page (change username and password, all roles) and admin user management (create, reset password, activate/deactivate, unlock); landing page, login (staff/admin and patient portals), logout, role-based dashboard shell with placeholder data, green theme, MySQL schema, real database login with lockout and audit logging. Patient records module: add/edit patient with validation and duplicate detection (`patient\_form.php`), searchable list (`patients.php`).
-* Not yet tested by the team at time of writing: database setup, login against MySQL, and the new patient form. Existing databases must run `database/migrations/2026-10-30\_add\_philhealth\_no.sql` first.
+* Done: Settings page (change username and password, all roles) and admin user management (create, reset password, activate/deactivate, unlock); landing page, login (staff/admin and patient portals), logout, role-based dashboard shell with placeholder data, green theme, MySQL schema, real database login with lockout and audit logging. Patient records module: add/edit patient with validation and duplicate detection (`patient_form.php`), searchable list (`patients.php`). Health Record template module: form (`health_record_form.php`) and PDF auto-filler (`health_record_pdf.php`) with exact underline alignment on `Health_Record.pdf`.
+* Not yet tested by the team at time of writing: database setup, login against MySQL, the new patient form, and the Health Record form/PDF. Existing databases must run migrations in `database/migrations/`.
 * Dashboard numbers are placeholders (`—`). Sidebar items marked "soon" are not built.
 
 ## Roadmap (in order)
 
 1. ~~Database + real login~~ (built; pending team verification)
-2. Patient records module (built: `patients.php` + `patient\_form.php`, core fields only; pending team verification). Still to do: delete patient (admin only), link a patient record to a portal account.
-3. ~~Admin user account management~~ (built: `users.php`). Still to do: audit log viewer; link patient records to patient user accounts.
-4. Patient portal: "My Records" showing only the logged-in patient's data.
+2. Patient records module (built: `patients.php` + `patient_form.php`, core fields only; pending team verification). Still to do: delete patient (admin only), link a patient record to a portal account.
+3. ~~Admin user account management~~ (built: `users.php`). ~~Audit log viewer~~ (built: `audit_log.php`). Still to do: link patient records to patient user accounts.
+4. ~~Patient portal: "My Records" showing only the logged-in patient's data.~~ (built: live dashboard + My Documents download with strict user_id boundary)
 5. Room temperature/humidity monitoring page (IoT), simulated data first.
-6. Real dashboard statistics.
-7. **Blocked until templates arrive:** form-specific fields, document templates, auto-fill, PDF/DOCX download.
+6. ~~Real dashboard statistics.~~ (built: live clinic overview, KPI metric cards, upcoming deliveries due soon, recent patient registrations, clinic shortcuts, and live audit log stream)
+7. Document templates & auto-fill (in progress: `Health_Record.pdf` auto-fill built via `health_record_form.php` and `health_record_pdf.php`).
 
 ## Progress log
 
@@ -161,6 +163,44 @@ USE maternadocs;
 ALTER TABLE patients ADD COLUMN philhealth\_no VARCHAR(14) NULL UNIQUE AFTER civil\_status;
 
 ```
+
+* **2026-11-06** Health Record auto-fill & PDF generator. Created `health_record_form.php` to capture Health Record fields (family serial number, blood type, education level, occupation, spouse details with blood type and education/occupation, PhilHealth membership type, weight, height) without redundant re-entry of patient name, birthdate, address, and PhilHealth number. Added server-side validation for all fields and spouse dependencies. Created `health_record_pdf.php` to stream the filled PDF on top of `templates/Health_Record.pdf` using FPDF with black font color and exact underline alignment calibrated via coordinate scanning. Added "Health Record" button in `patients.php` and wired "Forms & Documents" in `includes/auth.php`. Added database migration `database/migrations/2026-11-06_add_health_record_fields.sql`. Files: `health_record_form.php`, `health_record_pdf.php`, `patients.php`, `includes/auth.php`, `database/schema.sql`, `database/migrations/2026-11-06_add_health_record_fields.sql`, `README.md`.
+
+Migration for existing databases (run once in phpMyAdmin, SQL tab):
+
+```sql
+USE maternadocs;
+ALTER TABLE patients
+  ADD COLUMN family_serial_no       VARCHAR(30)   NULL        AFTER philhealth_no,
+  ADD COLUMN blood_type             ENUM('A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown') NULL AFTER family_serial_no,
+  ADD COLUMN education_level        ENUM('No formal education','Elementary','High School','Vocational/Technical','College','Post-Graduate','Unknown') NULL AFTER blood_type,
+  ADD COLUMN occupation             VARCHAR(100)  NULL        AFTER education_level,
+  ADD COLUMN spouse_first_name      VARCHAR(80)   NULL        AFTER occupation,
+  ADD COLUMN spouse_middle_name     VARCHAR(80)   NULL        AFTER spouse_first_name,
+  ADD COLUMN spouse_last_name       VARCHAR(80)   NULL        AFTER spouse_middle_name,
+  ADD COLUMN spouse_blood_type      ENUM('A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown') NULL AFTER spouse_last_name,
+  ADD COLUMN spouse_education_level ENUM('No formal education','Elementary','High School','Vocational/Technical','College','Post-Graduate','Unknown') NULL AFTER spouse_blood_type,
+  ADD COLUMN spouse_occupation      VARCHAR(100)  NULL        AFTER spouse_education_level,
+  ADD COLUMN philhealth_membership  ENUM('Member','Dependent','Indigent','None','Unknown') NULL AFTER spouse_occupation,
+  ADD COLUMN weight_kg              DECIMAL(5,2)  NULL        AFTER philhealth_membership,
+  ADD COLUMN height_cm              DECIMAL(5,2)  NULL        AFTER weight_kg;
+```
+
+* **2026-11-06** Removed emergency contact fields (`emergency_contact_name`, `emergency_contact_no`) and `para` field from core patient details in `patient_form.php` and `database/schema.sql`. Cleaned up validation logic and updated layout. Added migration `database/migrations/2026-11-06_remove_emergency_contact_and_para.sql`. Files: `patient_form.php`, `database/schema.sql`, `database/migrations/2026-11-06_remove_emergency_contact_and_para.sql`, `README.md`.
+
+Migration for existing databases (run once in phpMyAdmin, SQL tab):
+
+```sql
+USE maternadocs;
+ALTER TABLE patients
+  DROP COLUMN emergency_contact_name,
+  DROP COLUMN emergency_contact_no,
+  DROP COLUMN para;
+```
+
+* **2026-11-06** Made PDF documents downloadable for all accounts. Updated `health_record_pdf.php` to allow `patient` role while strictly enforcing boundary via `patients.user_id = $u['id']` so patients can view and download only their own PDF. Added `download=1` parameter to force direct download (`Content-Disposition: attachment`). Created `documents.php` providing "My Documents" for patients and searchable document hub for staff/admin. Updated `dashboard.php` to display live record details and one-click PDF download for logged-in patients. Added direct PDF download button in `patients.php`. Files: `health_record_pdf.php`, `documents.php`, `dashboard.php`, `patients.php`, `includes/auth.php`, `README.md`.
+* **2026-11-07** Implemented real Admin & Staff Dashboard in `dashboard.php`. Connected live database queries replacing placeholders: Total Patients, Deliveries Due in 30 Days, New Registrations This Month, Active Staff / Documents Generated. Added "Upcoming Deliveries (Due Soon)" prioritized schedule with urgency countdown badges, recent patient registrations list, clinic shortcuts toolbar, and coverage insights. Files: `dashboard.php`, `README.md`.
+* **2026-11-07** Added animation system and micro-interactions across the application. Added keyframes (`fadeInUp`, `scaleIn`, `slideDownFade`, `heartbeat`, `floatSlow`, `pulseDanger`, `pulseWarning`) in `assets/css/style.css` with smooth cubic-bezier easing. Applied organic heartbeat pulse on `.brand i` on hover, card elevation lifts on `.card-soft` and `.stat` with icon pop, floating hero card on the landing page, button micro-lifts and active press feedback, sidebar navigation translations and icon scale on hover, alert banner slide-down, table hover transitions, pulsing status for overdue/urgent deliveries, and staggered cascade entrance classes (`.anim-fade-up`, `.anim-delay-*`) on dashboard and landing sections. Included `@media (prefers-reduced-motion: reduce)` accessibility compliance. Files: `assets/css/style.css`, `dashboard.php`, `index.php`, `documents.php`, `README.md`.
 
 ## Maintaining this file
 

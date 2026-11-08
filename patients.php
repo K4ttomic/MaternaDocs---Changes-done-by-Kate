@@ -38,7 +38,11 @@ shell_start($u, 'Patient Records'); ?>
   <td><?= e((string)$r['contact_no']) ?: '—' ?></td>
   <td><?= e((string)$r['edd']) ?: '—' ?></td>
   <td class="text-secondary"><?= e((string)$r['username']) ?: '—' ?></td>
-  <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="patient_form.php?id=<?= (int)$r['id'] ?>">Edit</a></td>
+  <td class="text-end">
+    <a class="btn btn-sm btn-outline-secondary me-1" href="health_record_pdf.php?id=<?= (int)$r['id'] ?>&download=1" title="Download filled Health Record PDF"><i class="bi bi-download"></i> PDF</a>
+    <a class="btn btn-sm btn-outline-success me-1" href="health_record_form.php?id=<?= (int)$r['id'] ?>" title="Fill or view Health Record"><i class="bi bi-file-earmark-medical"></i> Health Record</a>
+    <a class="btn btn-sm btn-outline-primary" href="patient_form.php?id=<?= (int)$r['id'] ?>">Edit</a>
+  </td>
 </tr>
 <?php endforeach; if (!$rows): ?><tr><td colspan="7" class="text-secondary">No patients found.</td></tr><?php endif; ?>
 </tbody></table></div></div>

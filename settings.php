@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   } elseif ($do === 'password') {
     $new = $_POST['new'] ?? ''; $conf = $_POST['confirm'] ?? '';
     if (!$okPw) $err['password'][] = 'Current password is incorrect.';
-    if (strlen($new) < 8 || !preg_match('/[A-Za-z]/', $new) || !preg_match('/\d/', $new)) $err['password'][] = 'New password needs at least 8 characters, with a letter and a number.';
+    if (strlen($new) < 8 || strlen($new) > 72 || !preg_match('/[A-Za-z]/', $new) || !preg_match('/\d/', $new)) $err['password'][] = 'New password needs between 8 and 72 characters, with a letter and a number.';
     if ($new !== $conf) $err['password'][] = 'New password and confirmation do not match.';
     if ($new === $cur) $err['password'][] = 'New password must be different from the current one.';
     if (!$err['password']) {
@@ -56,9 +56,9 @@ shell_start($u, 'Settings'); ?>
 <?php else: alerts($err['name'], $ok['name'], 'Name updated.'); ?>
 <form method="post" novalidate>
   <input type="hidden" name="csrf" value="<?= csrf_token() ?>"><input type="hidden" name="do" value="name">
-  <div class="mb-3"><label class="form-label" for="f1">First name</label><input id="f1" name="first_name" class="form-control" required value="<?= e($nm['first_name']) ?>"></div>
-  <div class="mb-3"><label class="form-label" for="f2">Middle name <span class="text-secondary">(optional)</span></label><input id="f2" name="middle_name" class="form-control" value="<?= e((string)$nm['middle_name']) ?>"></div>
-  <div class="mb-3"><label class="form-label" for="f3">Surname</label><input id="f3" name="last_name" class="form-control" required value="<?= e($nm['last_name']) ?>"></div>
+  <div class="mb-3"><label class="form-label" for="f1">First name</label><input id="f1" name="first_name" class="form-control" required maxlength="80" value="<?= e($nm['first_name']) ?>"></div>
+  <div class="mb-3"><label class="form-label" for="f2">Middle name <span class="text-secondary">(optional)</span></label><input id="f2" name="middle_name" class="form-control" maxlength="80" value="<?= e((string)$nm['middle_name']) ?>"></div>
+  <div class="mb-3"><label class="form-label" for="f3">Surname</label><input id="f3" name="last_name" class="form-control" required maxlength="80" value="<?= e($nm['last_name']) ?>"></div>
   <button class="btn btn-primary">Update name</button>
 </form>
 <?php endif; ?></div>
@@ -67,7 +67,7 @@ shell_start($u, 'Settings'); ?>
 <?php alerts($err['username'], $ok['username'], 'Username updated. Use it the next time you sign in.'); ?>
 <form method="post" novalidate>
   <input type="hidden" name="csrf" value="<?= csrf_token() ?>"><input type="hidden" name="do" value="username">
-  <div class="mb-3"><label class="form-label" for="un">Username</label><input id="un" name="username" class="form-control" required autocapitalize="none" value="<?= e($u['username']) ?>">
+  <div class="mb-3"><label class="form-label" for="un">Username</label><input id="un" name="username" class="form-control" required maxlength="30" autocapitalize="none" value="<?= e($u['username']) ?>">
     <div class="form-text">3-30 characters: letters, numbers, dot or underscore.</div></div>
   <div class="mb-3"><label class="form-label" for="uc">Current password</label><input id="uc" name="current" type="password" class="form-control" required autocomplete="current-password"></div>
   <button class="btn btn-primary">Update username</button>
@@ -78,9 +78,9 @@ shell_start($u, 'Settings'); ?>
 <form method="post" novalidate>
   <input type="hidden" name="csrf" value="<?= csrf_token() ?>"><input type="hidden" name="do" value="password">
   <div class="mb-3"><label class="form-label" for="c">Current password</label><input id="c" name="current" type="password" class="form-control" required autocomplete="current-password"></div>
-  <div class="mb-3"><label class="form-label" for="n">New password</label><input id="n" name="new" type="password" class="form-control" required autocomplete="new-password">
-    <div class="form-text">At least 8 characters, with a letter and a number.</div></div>
-  <div class="mb-4"><label class="form-label" for="f">Confirm new password</label><input id="f" name="confirm" type="password" class="form-control" required autocomplete="new-password"></div>
+  <div class="mb-3"><label class="form-label" for="n">New password</label><input id="n" name="new" type="password" class="form-control" required maxlength="72" autocomplete="new-password">
+    <div class="form-text">At least 8 characters (max 72), with a letter and a number.</div></div>
+  <div class="mb-4"><label class="form-label" for="f">Confirm new password</label><input id="f" name="confirm" type="password" class="form-control" required maxlength="72" autocomplete="new-password"></div>
   <button class="btn btn-primary">Update password</button>
 </form></div>
 <?php shell_end();

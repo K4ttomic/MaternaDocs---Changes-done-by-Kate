@@ -9,11 +9,11 @@ $u = require_role(['admin', 'front_desk']);
 const MIN_AGE = 10;       // youngest patient age accepted
 const MAX_AGE = 60;       // oldest patient age accepted
 const MAX_PREGNANCY_DAYS = 300;  // EDD can be at most this many days after LMP
-const MAX_COUNT = 20;     // highest allowed gravida / para
+const MAX_COUNT = 20;     // highest allowed gravida
 
 $fields = ['first_name', 'middle_name', 'last_name', 'birthdate', 'civil_status', 'philhealth_no',
-           'address', 'contact_no', 'emergency_contact_name', 'emergency_contact_no',
-           'lmp', 'edd', 'gravida', 'para'];
+           'address', 'contact_no',
+           'lmp', 'edd', 'gravida'];
 $civilOptions = ['single' => 'Single', 'married' => 'Married', 'widowed' => 'Widowed', 'separated' => 'Separated', 'other' => 'Other'];
 
 /* ---------- small helper functions ---------- */
@@ -77,25 +77,15 @@ function validate_patient(array &$d, int $id): array {
     if ($p === null) $err['contact_no'] = 'Enter a mobile number like 09171234567.';
     else $d['contact_no'] = $p;
   }
-  if ($d['emergency_contact_no'] !== '') {
-    $p = clean_phone($d['emergency_contact_no']);
-    if ($p === null) $err['emergency_contact_no'] = 'Enter a mobile number like 09171234567.';
-    else $d['emergency_contact_no'] = $p;
-  }
 
-  // 7. Emergency contact: give both name and number, or neither
-  if ($d['emergency_contact_name'] !== '' && !preg_match('/^\p{L}[\p{L} .\x27’-]{0,149}$/u', $d['emergency_contact_name'])) $err['emergency_contact_name'] = 'Name has invalid characters.';
-  if ($d['emergency_contact_name'] !== '' && $d['emergency_contact_no'] === '') $err['emergency_contact_no'] = 'Add a number for this emergency contact.';
-  if ($d['emergency_contact_no'] !== '' && $d['emergency_contact_name'] === '') $err['emergency_contact_name'] = 'Add a name for this emergency contact.';
-
-  // 8. LMP (last menstrual period): real date, not in the future, after her birthdate
+  // 7. LMP (last menstrual period): real date, not in the future, after her birthdate
   if ($d['lmp'] !== '') {
     if (!valid_date($d['lmp'])) $err['lmp'] = 'Enter a valid date.';
     elseif ($d['lmp'] > $today) $err['lmp'] = 'LMP cannot be in the future.';
     elseif (!isset($err['birthdate']) && $d['birthdate'] !== '' && $d['lmp'] <= $d['birthdate']) $err['lmp'] = 'LMP must be after the birthdate.';
   }
 
-  // 9. EDD (expected delivery date): must come after LMP, and not unreasonably far after it
+  // 8. EDD (expected delivery date): must come after LMP, and not unreasonably far after it
   if ($d['edd'] !== '') {
     if (!valid_date($d['edd'])) $err['edd'] = 'Enter a valid date.';
     elseif ($d['lmp'] !== '' && !isset($err['lmp'])) {
@@ -105,12 +95,9 @@ function validate_patient(array &$d, int $id): array {
     }
   }
 
-  // 10. Gravida / para: whole numbers 0-20, and para cannot be more than gravida
-  foreach (['gravida' => 'Gravida', 'para' => 'Para'] as $k => $label) {
-    if ($d[$k] !== '' && (!ctype_digit($d[$k]) || (int)$d[$k] > MAX_COUNT)) $err[$k] = "$label must be a whole number from 0 to " . MAX_COUNT . '.';
-  }
-  if (!isset($err['gravida']) && !isset($err['para']) && $d['gravida'] !== '' && $d['para'] !== '' && (int)$d['para'] > (int)$d['gravida']) {
-    $err['para'] = 'Para cannot be more than gravida.';
+  // 9. Gravida: whole number 0-20
+  if ($d['gravida'] !== '' && (!ctype_digit($d['gravida']) || (int)$d['gravida'] > MAX_COUNT)) {
+    $err['gravida'] = 'Gravida must be a whole number from 0 to ' . MAX_COUNT . '.';
   }
 
   // 11. Duplicate detection (only runs if the fields it uses are already valid)
@@ -173,14 +160,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $values = [$data['first_name'], nn($data['middle_name']), $data['last_name'], $data['birthdate'],
                nn($data['civil_status']), nn($data['philhealth_no']), nn($data['address']), nn($data['contact_no']),
-               nn($data['emergency_contact_name']), nn($data['emergency_contact_no']),
-               nn($data['lmp']), nn($data['edd']), nn($data['gravida']), nn($data['para'])];
+               nn($data['lmp']), nn($data['edd']), nn($data['gravida'])];
 
     $pdo = db();
     $pdo->beginTransaction();
     if ($isEdit) {
       $pdo->prepare('UPDATE patients SET first_name=?, middle_name=?, last_name=?, birthdate=?, civil_status=?, philhealth_no=?,
-          address=?, contact_no=?, emergency_contact_name=?, emergency_contact_no=?, lmp=?, edd=?, gravida=?, para=? WHERE id=?')
+          address=?, contact_no=?, lmp=?, edd=?, gravida=? WHERE id=?')
           ->execute(array_merge($values, [$id]));
       // keep the patient's portal account name in sync
       $pdo->prepare('UPDATE users SET first_name=?, middle_name=?, last_name=? WHERE id = (SELECT user_id FROM patients WHERE id=?)')
@@ -189,8 +175,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       $_SESSION['flash'] = 'Patient record updated.';
     } else {
       $pdo->prepare('INSERT INTO patients (first_name, middle_name, last_name, birthdate, civil_status, philhealth_no,
-          address, contact_no, emergency_contact_name, emergency_contact_no, lmp, edd, gravida, para, created_by)
-          VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+          address, contact_no, lmp, edd, gravida, created_by)
+          VALUES (?,?,?,?,?,?,?,?,?,?,?,?)')
           ->execute(array_merge($values, [$u['id']]));
       $newId = (int)$pdo->lastInsertId();
       log_action($u['id'], 'patient_created', "patient #$newId");
@@ -212,9 +198,9 @@ shell_start($u, $isEdit ? 'Edit Patient' : 'Add Patient'); ?>
 
   <div class="card-soft mb-4" style="height:auto"><h5 class="mb-3">Personal details</h5>
     <div class="row g-3">
-      <div class="col-md-4"><?php input_field('first_name', 'First name', $data, $err, 'text', '', 'required'); ?></div>
-      <div class="col-md-4"><?php input_field('middle_name', 'Middle name (optional)', $data, $err); ?></div>
-      <div class="col-md-4"><?php input_field('last_name', 'Surname', $data, $err, 'text', '', 'required'); ?></div>
+      <div class="col-md-4"><?php input_field('first_name', 'First name', $data, $err, 'text', '', 'required maxlength="80"'); ?></div>
+      <div class="col-md-4"><?php input_field('middle_name', 'Middle name (optional)', $data, $err, 'text', '', 'maxlength="80"'); ?></div>
+      <div class="col-md-4"><?php input_field('last_name', 'Surname', $data, $err, 'text', '', 'required maxlength="80"'); ?></div>
       <div class="col-md-4"><?php input_field('birthdate', 'Birthdate', $data, $err, 'date', '', 'required max="' . date('Y-m-d') . '"'); ?></div>
       <div class="col-md-4">
         <label class="form-label" for="civil_status">Civil status (optional)</label>
@@ -226,25 +212,22 @@ shell_start($u, $isEdit ? 'Edit Patient' : 'Add Patient'); ?>
         </select>
         <?php if (isset($err['civil_status'])): ?><div class="invalid-feedback"><?= e($err['civil_status']) ?></div><?php endif; ?>
       </div>
-      <div class="col-md-4"><?php input_field('philhealth_no', 'PhilHealth number (optional)', $data, $err, 'text', '12 digits, e.g. 01-234567890-1'); ?></div>
+      <div class="col-md-4"><?php input_field('philhealth_no', 'PhilHealth number (optional)', $data, $err, 'text', '12 digits, e.g. 01-234567890-1', 'maxlength="14"'); ?></div>
     </div>
   </div>
 
   <div class="card-soft mb-4" style="height:auto"><h5 class="mb-3">Contact</h5>
     <div class="row g-3">
-      <div class="col-md-8"><?php input_field('address', 'Address (optional)', $data, $err); ?></div>
-      <div class="col-md-4"><?php input_field('contact_no', 'Mobile number (optional)', $data, $err, 'text', 'e.g. 09171234567'); ?></div>
-      <div class="col-md-8"><?php input_field('emergency_contact_name', 'Emergency contact name (optional)', $data, $err); ?></div>
-      <div class="col-md-4"><?php input_field('emergency_contact_no', 'Emergency contact number', $data, $err, 'text', 'e.g. 09171234567'); ?></div>
+      <div class="col-md-8"><?php input_field('address', 'Address (optional)', $data, $err, 'text', '', 'maxlength="255"'); ?></div>
+      <div class="col-md-4"><?php input_field('contact_no', 'Mobile number (optional)', $data, $err, 'text', 'e.g. 09171234567', 'maxlength="20"'); ?></div>
     </div>
   </div>
 
   <div class="card-soft mb-4" style="height:auto"><h5 class="mb-3">Pregnancy</h5>
     <div class="row g-3">
-      <div class="col-md-3"><?php input_field('lmp', 'LMP (last menstrual period)', $data, $err, 'date', '', 'max="' . date('Y-m-d') . '"'); ?></div>
-      <div class="col-md-3"><?php input_field('edd', 'EDD (expected delivery date)', $data, $err, 'date', 'Leave blank to compute from LMP'); ?></div>
-      <div class="col-md-3"><?php input_field('gravida', 'Gravida', $data, $err, 'number', 'Number of pregnancies', 'min="0" max="' . MAX_COUNT . '"'); ?></div>
-      <div class="col-md-3"><?php input_field('para', 'Para', $data, $err, 'number', 'Number of deliveries', 'min="0" max="' . MAX_COUNT . '"'); ?></div>
+      <div class="col-md-4"><?php input_field('lmp', 'LMP (last menstrual period)', $data, $err, 'date', '', 'max="' . date('Y-m-d') . '"'); ?></div>
+      <div class="col-md-4"><?php input_field('edd', 'EDD (expected delivery date)', $data, $err, 'date', 'Leave blank to compute from LMP'); ?></div>
+      <div class="col-md-4"><?php input_field('gravida', 'Gravida', $data, $err, 'number', 'Number of pregnancies', 'min="0" max="' . MAX_COUNT . '" step="1"'); ?></div>
     </div>
   </div>
 

@@ -49,9 +49,9 @@ page_head('Sign in'); ?>
         <input type="hidden" name="csrf" value="<?= csrf_token() ?>">
         <input type="hidden" name="portal" value="<?= $portal ?>">
         <div class="mb-3"><label class="form-label" for="username">Username</label>
-          <input id="username" name="username" type="text" class="form-control" required autofocus autocapitalize="none" autocomplete="username" value="<?= e($_POST['username'] ?? '') ?>"></div>
+          <input id="username" name="username" type="text" class="form-control" required maxlength="30" autofocus autocapitalize="none" autocomplete="username" value="<?= e($_POST['username'] ?? '') ?>"></div>
         <div class="mb-4"><label class="form-label" for="pw">Password</label>
-          <div class="input-group"><input id="pw" name="password" type="password" class="form-control" required autocomplete="current-password">
+          <div class="input-group"><input id="pw" name="password" type="password" class="form-control" required maxlength="72" autocomplete="current-password">
           <button class="btn btn-outline-secondary" type="button" onclick="const p=document.getElementById('pw');p.type=p.type==='password'?'text':'password'" aria-label="Show password"><i class="bi bi-eye"></i></button></div></div>
         <button class="btn btn-primary w-100 py-2">Sign in</button>
       </form>

@@ -27,11 +27,11 @@
 <section class="pb-5"><div class="container">
   <h2 class="text-center mb-4">One system, three kinds of access</h2>
   <div class="row g-4">
-    <div class="col-md-4"><div class="card-soft"><div class="ico"><i class="bi bi-person-badge"></i></div><h5>Front Desk Staff</h5>
+    <div class="col-md-4"><div class="card-soft anim-fade-up anim-delay-1"><div class="ico"><i class="bi bi-person-badge"></i></div><h5>Front Desk Staff</h5>
       <p class="text-secondary mb-0">Register patients, enter data with live validation, preview and download filled documents, and watch clinic activity on the dashboard.</p></div></div>
-    <div class="col-md-4"><div class="card-soft"><div class="ico"><i class="bi bi-person-gear"></i></div><h5>Administrators</h5>
+    <div class="col-md-4"><div class="card-soft anim-fade-up anim-delay-2"><div class="ico"><i class="bi bi-person-gear"></i></div><h5>Administrators</h5>
       <p class="text-secondary mb-0">Everything staff can do, plus managing user accounts and document templates, and reviewing the audit log.</p></div></div>
-    <div class="col-md-4"><div class="card-soft"><div class="ico"><i class="bi bi-heart-pulse"></i></div><h5>Patients</h5>
+    <div class="col-md-4"><div class="card-soft anim-fade-up anim-delay-3"><div class="ico"><i class="bi bi-heart-pulse"></i></div><h5>Patients</h5>
       <p class="text-secondary mb-0">Securely view your own records and expected delivery date, and download your documents anytime. You only ever see your own data.</p></div></div>
   </div>
 </div></section>
@@ -39,9 +39,9 @@
 <section id="how" class="py-5 bg-white"><div class="container">
   <h2 class="text-center mb-5">How it works</h2>
   <div class="row g-4 text-center">
-    <div class="col-md-4"><div class="step-n">1</div><h5>Enter data once</h5><p class="text-secondary">One profile per patient feeds every form.</p></div>
-    <div class="col-md-4"><div class="step-n">2</div><h5>System validates</h5><p class="text-secondary">Required fields, date logic, ranges, ID formats, duplicates.</p></div>
-    <div class="col-md-4"><div class="step-n">3</div><h5>Download the PDF</h5><p class="text-secondary">Review the preview, then download, ready for submission.</p></div>
+    <div class="col-md-4"><div class="anim-fade-up anim-delay-1"><div class="step-n">1</div><h5>Enter data once</h5><p class="text-secondary">One profile per patient feeds every form.</p></div></div>
+    <div class="col-md-4"><div class="anim-fade-up anim-delay-2"><div class="step-n">2</div><h5>System validates</h5><p class="text-secondary">Required fields, date logic, ranges, ID formats, duplicates.</p></div></div>
+    <div class="col-md-4"><div class="anim-fade-up anim-delay-3"><div class="step-n">3</div><h5>Download the PDF</h5><p class="text-secondary">Review the preview, then download, ready for submission.</p></div></div>
   </div>
 </div></section>
 
