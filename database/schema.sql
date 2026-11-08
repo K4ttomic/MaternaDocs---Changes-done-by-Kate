@@ -28,14 +28,26 @@ CREATE TABLE IF NOT EXISTS patients (
   -- >>> CONTINUED WORK (2026-10-30): column below was added <<<
   philhealth_no          VARCHAR(14) NULL UNIQUE,   -- stored as XX-XXXXXXXXX-X
   -- >>> end of added column <<<
+  -- >>> CONTINUED WORK (2026-11-06): Health Record template fields <<<
+  family_serial_no       VARCHAR(30)   NULL,
+  blood_type             ENUM('A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown') NULL,
+  education_level        ENUM('No formal education','Elementary','High School','Vocational/Technical','College','Post-Graduate','Unknown') NULL,
+  occupation             VARCHAR(100)  NULL,
+  spouse_first_name      VARCHAR(80)   NULL,
+  spouse_middle_name     VARCHAR(80)   NULL,
+  spouse_last_name       VARCHAR(80)   NULL,
+  spouse_blood_type      ENUM('A+','A-','B+','B-','AB+','AB-','O+','O-','Unknown') NULL,
+  spouse_education_level ENUM('No formal education','Elementary','High School','Vocational/Technical','College','Post-Graduate','Unknown') NULL,
+  spouse_occupation      VARCHAR(100)  NULL,
+  philhealth_membership  ENUM('Member','Dependent','Indigent','None','Unknown') NULL,
+  weight_kg              DECIMAL(5,2)  NULL,
+  height_cm              DECIMAL(5,2)  NULL,
+  -- >>> end of Health Record fields <<<
   address                VARCHAR(255) NULL,
   contact_no             VARCHAR(20) NULL,
-  emergency_contact_name VARCHAR(150) NULL,
-  emergency_contact_no   VARCHAR(20) NULL,
   lmp                    DATE NULL,
   edd                    DATE NULL,
   gravida                TINYINT UNSIGNED NULL,
-  para                   TINYINT UNSIGNED NULL,
   created_by             INT UNSIGNED NULL,
   created_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at             TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

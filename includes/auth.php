@@ -10,15 +10,15 @@ const ROLE_LABELS = ['admin' => 'Administrator', 'front_desk' => 'Front Desk Sta
 const NAV = [  // [label, icon, href or null if not built yet]
   'admin' => [
     ['Dashboard', 'bi-grid', 'dashboard.php'], ['Patient Records', 'bi-people', 'patients.php'],
-    ['Forms & Documents', 'bi-file-earmark-text', null], ['Templates', 'bi-files', null],
-    ['User Accounts', 'bi-person-gear', 'users.php'], ['Audit Log', 'bi-shield-check', null],
+    ['Forms & Documents', 'bi-file-earmark-text', 'documents.php'],
+    ['User Accounts', 'bi-person-gear', 'users.php'], ['Audit Log', 'bi-shield-check', 'audit_log.php'],
   ],
   'front_desk' => [
     ['Dashboard', 'bi-grid', 'dashboard.php'], ['Patient Records', 'bi-people', 'patients.php'],
-    ['Forms & Documents', 'bi-file-earmark-text', null],
+    ['Forms & Documents', 'bi-file-earmark-text', 'documents.php'],
   ],
   'patient' => [
-    ['My Records', 'bi-heart-pulse', 'dashboard.php'], ['My Documents', 'bi-download', null],
+    ['My Records', 'bi-heart-pulse', 'dashboard.php'], ['My Documents', 'bi-download', 'documents.php'],
   ],
 ];
 
@@ -39,7 +39,7 @@ function require_role(array $roles): array {
 function csrf_token(): string { return $_SESSION['csrf'] ??= bin2hex(random_bytes(16)); }
 function csrf_ok(?string $t): bool { return $t && hash_equals($_SESSION['csrf'] ?? '', $t); }
 function valid_username(string $s): bool { return (bool)preg_match('/^[a-z0-9._]{3,30}$/', $s); }
-function valid_name(string $s): bool { return (bool)preg_match('/^\p{L}[\p{L} .\x27’-]{0,79}$/u', $s); }
+function valid_name(string $s): bool { return (bool)preg_match('/^\p{L}[\p{L} .\x27\x60\x{2019}\x{2018}\-]{0,79}$/u', $s); }
 function compose_name(?string $f, ?string $m, ?string $l): string { return trim(preg_replace('/\s+/', ' ', "$f $m $l")); }
 function e(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
 
@@ -51,7 +51,7 @@ function page_head(string $title): void { ?>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:wght@600;700&display=swap" rel="stylesheet">
-<link href="assets/css/style.css" rel="stylesheet">
+<link href="assets/css/style.css?v=<?= filemtime(__DIR__ . '/../assets/css/style.css') ?>" rel="stylesheet">
 </head><body>
 <?php }
 function page_foot(): void { ?>
